@@ -46,7 +46,7 @@ class NewspaperAPI(Resource):
 @newspaper_ns.route('/<int:paper_id>')
 class NewspaperID(Resource):
 
-    @newspaper_ns.doc(parser=paper_model, description="Get a new newspaper")
+    @newspaper_ns.doc(description="Get a new newspaper")
     @newspaper_ns.marshal_with(paper_model, envelope='newspaper')
     def get(self, paper_id):
         search_result = Agency.get_instance().get_newspaper(paper_id)
