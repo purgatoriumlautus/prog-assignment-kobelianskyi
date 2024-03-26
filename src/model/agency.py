@@ -1,5 +1,5 @@
 from typing import List, Union, Optional
-
+from flask import jsonify
 from .newspaper import Newspaper
 
 
@@ -18,7 +18,8 @@ class Agency(object):
 
     def add_newspaper(self, new_paper: Newspaper):
         #TODO: assert that ID does not exist  yet (or create a new one)
-        self.newspapers.append(new_paper)
+        if not self.get_newspaper(new_paper.paper_id):
+            self.newspapers.append(new_paper)
 
     def get_newspaper(self, paper_id: Union[int,str]) -> Optional[Newspaper]:
         for paper in self.newspapers:
@@ -26,6 +27,17 @@ class Agency(object):
                 return paper
         return None
 
+
+    def update_newspaper(self,upd_paper):
+        if self.get_newspaper(upd_paper.paper_id):
+            self.remove_newspaper(self.get_newspaper(upd_paper.paper_id))
+            self.newspapers.append(upd_paper)
+            return upd_paper
+        else: 
+            return None
+    
+    
+    
     def all_newspapers(self) -> List[Newspaper]:
         return self.newspapers
 
