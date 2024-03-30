@@ -4,25 +4,31 @@ from time import time_ns
 from ..model.agency import Agency
 from ..model.newspaper import Newspaper
 from ..model.issue import Issue
-from datetime import date,datetime
+from ..model.editor import Editor
 
 
 newspaper_ns = Namespace("newspaper", description="Newspaper related operations")
 
+editor_model = newspaper_ns.model('EditorNewsModel',{
+    'editor_id': fields.Integer(required = True, help = "Unique editor's id"),
+    'name': fields.String(required = True,help = "Name of the editor")
+    })
 
+editor_id_input_model = newspaper_ns.model("Editor_Id_InputModel",{
+    "editor_id":fields.Integer(required=True,help=" Unique editor's id")
+    })
 
-issue_model= newspaper_ns.model('IssueModel',{
+issue_model =  newspaper_ns.model('IssueModel',{
     'issue_id': fields.Integer(help="Number of an issue"),
     'releasedate': fields.String(required = True,help = "Date of the release of an issue"),
     'pages': fields.Integer(required = True, help="Number of pages of an issue"),
-    'editor': fields.String(required = True, help = "Editor of an Issue"),
-    'released': fields.Boolean(help = "State of issue")
+    'released': fields.Boolean(help = "State of issue"),
+    'editor': fields.Nested(editor_model)
 })
 
 issue_input_model = newspaper_ns.model('IssueInputModel',{
     'release_date': fields.String(required = True,help = "Date of the release of an issue"),
-    'pages': fields.Integer(required = True, help="Number of pages of an issue"),
-    'editor': fields.String(required = True, help = "Editor of an Issue"),
+    'pages': fields.Integer(required = True, help="Number of pages of an issue")
     })
 
 
@@ -50,6 +56,13 @@ paper_input_model = newspaper_ns.model('NewspaperInputModel', {
    })
 
 
+
+
+
+
+
+
+
 @newspaper_ns.route('/')
 class NewspaperAPI(Resource):
     @newspaper_ns.doc(paper_model, description="Add a new newspaper")
@@ -57,7 +70,7 @@ class NewspaperAPI(Resource):
     @newspaper_ns.marshal_with(paper_model, envelope='newspaper')
     def post(self):
         # TODO: this is not smart! you should find a better way to generate a unique ID!
-        paper_id = int(time_ns()*0.001)
+        paper_id = int(str(time_ns())[9:17])
 
         # create a new paper object and add it
         new_paper = Newspaper(paper_id=paper_id,
@@ -120,7 +133,7 @@ class IssueApi(Resource):
     def post(self,paper_id):
         issue = Issue(releasedate=newspaper_ns.payload['release_date'],
                     pages=newspaper_ns.payload['pages'],
-                    editor=newspaper_ns.payload['editor'])
+                     newspaper= Agency.get_instance().get_newspaper(paper_id))
         
         Agency.get_instance().create_issue(paper_id=paper_id,issue=issue)
         return jsonify(f"Issue number - {issue.issue_id} has been added to {Agency.get_instance().get_newspaper(paper_id).name} newspaper")
@@ -142,3 +155,13 @@ class ReleaseIssue(Resource):
     
         else:
             return jsonify(f"Issue number - {issue_id} wasn't released")
+        
+
+@newspaper_ns.route('/<int:paper_id>/issue/<int:issue_id>/editor',methods=['POST'])
+class SpecifyEditor(Resource):
+    @newspaper_ns.marshal_with(issue_model)
+    @newspaper_ns.expect(editor_id_input_model,validate=True)
+    def post(self,paper_id,issue_id):
+        return Agency.get_instance().set_editor(paper_id,issue_id,newspaper_ns.payload["editor_id"])
+        
+

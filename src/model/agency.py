@@ -1,14 +1,15 @@
 from typing import List, Union, Optional
 from flask import jsonify
 from .newspaper import Newspaper
-
+from .editor import Editor
 
 class Agency(object):
     singleton_instance = None
 
     def __init__(self):
         self.newspapers: List[Newspaper] = []
-
+        self.editors: List[Editor] = []
+    
     @staticmethod
     def get_instance():
         if Agency.singleton_instance is None:
@@ -60,7 +61,41 @@ class Agency(object):
     def create_issue(self, paper_id: Union[int,str],issue = None) -> Optional[Newspaper]:
         return self.get_newspaper(paper_id).add_issue(issue)
 
+    
 
     def release_issue(self,paper_id,issue_id):
         return self.get_newspaper(paper_id).release_issue(issue_id)
 
+    def get_editors(self):
+        return self.editors
+
+    def get_editor(self,editor_id):
+        for editor in self.editors:
+            if editor.editor_id == editor_id:
+                return editor
+        
+    def add_editor(self,editor):
+        if not self.get_editor(editor.editor_id):
+            self.editors.append(editor)
+            return editor
+        else:
+            return None
+    
+    
+
+    def set_editor(self,paper_id,issue_id,editor_id):
+        editor = self.get_editor(editor_id)
+        issue = self.get_issue(paper_id,issue_id)
+        issue.set_editor(editor)
+        editor.add_issue(issue)
+        editor.add_newspaper(issue.newspaper)  
+        return self.get_issue(paper_id,issue_id)
+        
+
+
+    def update_editor(self,upd_editor,editor_id):
+        editor = self.get_editor(editor_id)
+        
+        editor.name = upd_editor.name
+        editor.address = upd_editor.address
+        return edito

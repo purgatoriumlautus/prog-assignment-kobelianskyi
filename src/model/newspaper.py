@@ -3,6 +3,8 @@ from typing import List
 from flask_restx import Model
 
 from .issue import Issue
+from .editor import Editor
+
 
 
 class Newspaper(object):
@@ -12,10 +14,11 @@ class Newspaper(object):
         self.frequency: int = frequency  # the issue frequency (in days)
         self.price: float = price  # the monthly price
         self.issues: List[Issue] = []
-
+        self.editors: List[Editor]
 
     def add_issue(self,issue):
         issue.issue_id = len(self.issues)+1
+        
         self.issues.append(issue)
         return issue
 
@@ -26,7 +29,16 @@ class Newspaper(object):
                 return issue
         return None
 
-
+    def add_editor(self,editor):
+        for edit in self.editors:
+            if edit.editor_id == editor.editor_id:
+                return False
+        else:
+            self.editors.append(editor)
+            return True
+    
+    
+    
     def release_issue(self,issue_id):
         if self.get_issue(issue_id).release():
             return True
