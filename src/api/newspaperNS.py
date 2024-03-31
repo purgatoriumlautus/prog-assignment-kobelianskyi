@@ -4,7 +4,7 @@ from time import time_ns
 from ..model.agency import Agency
 from ..model.newspaper import Newspaper
 from ..model.issue import Issue
-from ..model.editor import Editor
+
 
 
 newspaper_ns = Namespace("newspaper", description="Newspaper related operations")
@@ -31,8 +31,7 @@ issue_input_model = newspaper_ns.model('IssueInputModel',{
     'pages': fields.Integer(required = True, help="Number of pages of an issue")
     })
 
-
-paper_model = newspaper_ns.model('NewspaperModel', {
+paper_model= newspaper_ns.model('NewspaperModel', {
     'paper_id': fields.Integer(required=False,
             help='The unique identifier of a newspaper'),
     'name': fields.String(required=True,
@@ -41,7 +40,22 @@ paper_model = newspaper_ns.model('NewspaperModel', {
             help='The publication frequency of the newspaper in days (e.g. 1 for daily papers and 7 for weekly magazines'),
     'price': fields.Float(required=True,
             help='The monthly price of the newspaper (e.g. 12.3)'),
-    'issues': fields.List(fields.Nested(issue_model,required = True, help="All issues of a particular pages"))
+    
+   
+   })
+
+
+paper_info_model = newspaper_ns.model('NewspaperInfoModel', {
+    'paper_id': fields.Integer(required=False,
+            help='The unique identifier of a newspaper'),
+    'name': fields.String(required=True,
+            help='The name of the newspaper, e.g. The New York Times'),
+    'frequency': fields.Integer(required=True,
+            help='The publication frequency of the newspaper in days (e.g. 1 for daily papers and 7 for weekly magazines'),
+    'price': fields.Float(required=True,
+            help='The monthly price of the newspaper (e.g. 12.3)'),
+    'issues': fields.List(fields.Nested(issue_model,required = True, help="All issues of a particular pages")),
+    'editors': fields.List(fields.Nested(editor_model))
    
    })
 
@@ -90,9 +104,8 @@ class NewspaperAPI(Resource):
 
 @newspaper_ns.route('/<int:paper_id>')
 class NewspaperID(Resource):
-
     @newspaper_ns.doc(description="Get a new newspaper")
-    @newspaper_ns.marshal_with(paper_model, envelope='newspaper')
+    @newspaper_ns.marshal_with(paper_info_model, envelope='newspaper')
     def get(self, paper_id):
         search_result = Agency.get_instance().get_newspaper(paper_id)
         return search_result
@@ -121,7 +134,6 @@ class NewspaperID(Resource):
 
 @newspaper_ns.route('/<int:paper_id>/issue')
 class IssueApi(Resource):
-    
     @newspaper_ns.doc(description="Get an issue")
     @newspaper_ns.marshal_with(issue_model)
     def get(self,paper_id):
@@ -131,13 +143,16 @@ class IssueApi(Resource):
 
     @newspaper_ns.expect(issue_input_model)
     def post(self,paper_id):
-        issue = Issue(releasedate=newspaper_ns.payload['release_date'],
-                    pages=newspaper_ns.payload['pages'],
-                     newspaper= Agency.get_instance().get_newspaper(paper_id))
-        
-        Agency.get_instance().create_issue(paper_id=paper_id,issue=issue)
-        return jsonify(f"Issue number - {issue.issue_id} has been added to {Agency.get_instance().get_newspaper(paper_id).name} newspaper")
-    
+        news = Agency.get_instance().get_newspaper(paper_id)
+        if news:
+            issue = Issue(releasedate=newspaper_ns.payload['release_date'],
+                        pages=newspaper_ns.payload['pages'],
+                            newspaper= news)
+            
+            Agency.get_instance().create_issue(paper_id=paper_id,issue=issue)
+            return jsonify(f"Issue number - {issue.issue_id} has been added to {Agency.get_instance().get_newspaper(paper_id).name} newspaper")
+        return jsonify(f"Newspaper with id - {paper_id} wasn't found")
+
 @newspaper_ns.route('/<int:paper_id>/issue/<int:issue_id>')
 class IssueId(Resource):
     
@@ -150,12 +165,8 @@ class IssueId(Resource):
 @newspaper_ns.route('/<int:paper_id>/issue/<int:issue_id>/release',methods=['POST'])
 class ReleaseIssue(Resource):
     def post(self,paper_id,issue_id):
-        if Agency.get_instance().release_issue(paper_id,issue_id):
-            return jsonify(f"Issue number - {issue_id} has been released")
-    
-        else:
-            return jsonify(f"Issue number - {issue_id} wasn't released")
-        
+        return Agency.get_instance().release_issue(paper_id,issue_id)
+
 
 @newspaper_ns.route('/<int:paper_id>/issue/<int:issue_id>/editor',methods=['POST'])
 class SpecifyEditor(Resource):

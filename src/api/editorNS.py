@@ -27,13 +27,18 @@ issue_model = editor_ns.model("Issuemodel",{
     "pages": fields.Integer(help="Number of the pages of an issue"),
     'newspaper':fields.Nested(paper_model)
 })
+editor_model = editor_info_model = editor_ns.model('EditorModel',{
+    'editor_id': fields.Integer(help = 'Unique id of the editor'),
+    'name': fields.String(help = "Name of the editor"),
+    'address': fields.String(help="address of living of the editor"),
+    })
 
-editor_model = editor_ns.model('EditorModel',{
+editor_info_model = editor_ns.model('EditorInfoModel',{
     'editor_id': fields.Integer(help = 'Unique id of the editor'),
     'name': fields.String(help = "Name of the editor"),
     'address': fields.String(help="address of living of the editor"),
     'newspapers': fields.List(fields.Nested(paper_model,required = False, help="All issues of a particular pages")),
-    'issues':fields.List(fields.Nested(issue_model,help = "List of all the editor's issues"))
+    'issues': fields.List(fields.Nested(issue_model))
     })
     
 
@@ -61,7 +66,7 @@ class EditorAPI(Resource):
 @editor_ns.route("/<int:editor_id>")
 class EditorId(Resource):
     
-    @editor_ns.marshal_with(editor_model)
+    @editor_ns.marshal_with(editor_info_model)
     def get(self,editor_id):
         return Agency.get_instance().get_editor(editor_id)
     
@@ -71,3 +76,19 @@ class EditorId(Resource):
     def put(self,editor_id):
         upd_editor = Editor(editor_id=editor_id,name = editor_ns.payload["name"],address=editor_ns.payload["address"])
         return Agency.get_instance().update_editor(upd_editor,editor_id)
+    
+
+    # @editor_ns.marshal_with(editor_model)
+    def delete(self,editor_id):
+        editor = Agency.get_instance().get_editor(editor_id)
+        if editor:
+            Agency.get_instance().delete_editor(editor_id)
+            return jsonify(f"Editor {editor.name} with id {editor_id} was successfully fired!")
+        else:
+            return jsonify(f"Editor wasn't found")
+    
+@editor_ns.route("/<int:editor_id>/issues")
+class EditorIssues(Resource):
+    @editor_ns.marshal_list_with(issue_model)
+    def get(self,editor_id):
+        return Agency.get_instance().get_editor_issues(editor_id)

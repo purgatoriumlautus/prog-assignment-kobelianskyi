@@ -8,7 +8,7 @@ class Issue(object):
         self.released: bool = released
         self.pages: int = pages
         self.newspaper = newspaper
-        self.editor = None
+        self.editor = newspaper.editors[0]
         
         
     def set_editor(self, editor):
@@ -18,9 +18,9 @@ class Issue(object):
     def release(self):
         if not self.released:
             self.released = True
-            return True
+            return f"Issue number - {self.issue_id} was succesfully released"
 
-        return False
+        return f"Issue number - {self.issue_id} was already released"
 
 
     # def __repr__(self) -> str:

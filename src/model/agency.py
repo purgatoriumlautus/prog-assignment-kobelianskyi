@@ -17,10 +17,7 @@ class Agency(object):
 
         return Agency.singleton_instance
 
-    def add_newspaper(self, new_paper: Newspaper):
-        #TODO: assert that ID does not exist  yet (or create a new one)
-        if not self.get_newspaper(new_paper.paper_id):
-            self.newspapers.append(new_paper)
+    
 
 
 
@@ -28,17 +25,23 @@ class Agency(object):
         for paper in self.newspapers:
             if paper.paper_id == paper_id:
                 return paper
-        return None
-
+        return False
+    
+    def add_newspaper(self, new_paper: Newspaper):
+        #TODO: assert that ID does not exist  yet (or create a new one)
+        
+        if not self.get_newspaper(new_paper.paper_id):
+            self.newspapers.append(new_paper)
 
     def update_newspaper(self,upd_paper):
-        if self.get_newspaper(upd_paper.paper_id):
-            self.get_newspaper(upd_paper.paper_id).name = upd_paper.name
-            self.get_newspaper(upd_paper.paper_id).frequency = upd_paper.frequency
-            self.get_newspaper(upd_paper.paper_id).price = upd_paper.price
-            return self.get_newspaper(upd_paper.paper_id)
-        else: 
-            return None
+        paper =  self.get_newspaper(upd_paper.paper_id)
+        if paper:
+            paper.name = upd_paper.name
+            paper.frequency = upd_paper.frequency
+            paper.price = upd_paper.price
+            return paper
+        
+        return None
     
     
     
@@ -51,21 +54,43 @@ class Agency(object):
 
 
     def all_issues(self, paper_id: Union[int,str]) -> Optional[Newspaper]:
-        return self.get_newspaper(paper_id).issues
-    
+        paper = self.get_newspaper(paper_id)
+        if paper:
+            return paper.issues
+        return False
 
     def get_issue(self, paper_id: Union[int,str],issue_id) -> Optional[Newspaper]:
-        return self.get_newspaper(paper_id).get_issue(issue_id)
+        paper = self.get_newspaper(paper_id)
+        if paper:
+            return paper.get_issue(issue_id)
+        return False
+        
 
 
     def create_issue(self, paper_id: Union[int,str],issue = None) -> Optional[Newspaper]:
-        return self.get_newspaper(paper_id).add_issue(issue)
-
+        paper = self.get_newspaper(paper_id)
+        if paper:
+            return paper.add_issue(issue)
+        return False
     
 
     def release_issue(self,paper_id,issue_id):
-        return self.get_newspaper(paper_id).release_issue(issue_id)
-
+        paper = self.get_newspaper(paper_id)
+        if paper:
+            return(jsonify(f"{paper.release_issue(issue_id)}"))
+        
+        # if paper:
+        #     if paper.release_issue(issue_id) == "already released":
+        #         return jsonify(f"Issue number {issue_id} is already released")
+        #     if not paper.release_issue(issue_id) == "released":
+        #         return jsonify(f"Issue number {issue_id} was succesfully released")
+        #     if paper.release_issue(issue_id) == "not found":
+        #         return jsonify(f"Issue WAS NOT FOUND!")
+        else:
+            return jsonify(f"Paper WAS NOT FOUND!")
+        
+        
+    
     def get_editors(self):
         return self.editors
 
@@ -74,28 +99,53 @@ class Agency(object):
             if editor.editor_id == editor_id:
                 return editor
         
+        return False
+    
     def add_editor(self,editor):
+        
         if not self.get_editor(editor.editor_id):
             self.editors.append(editor)
             return editor
-        else:
-            return None
+
     
     
 
     def set_editor(self,paper_id,issue_id,editor_id):
+        
         editor = self.get_editor(editor_id)
         issue = self.get_issue(paper_id,issue_id)
-        issue.set_editor(editor)
-        editor.add_issue(issue)
-        editor.add_newspaper(issue.newspaper)  
-        return self.get_issue(paper_id,issue_id)
-        
+        news = self.get_newspaper(paper_id)
+        if editor and issue and news:
+            news.add_editor(editor)
+            issue.set_editor(editor)
+            editor.add_issue(issue)
+            editor.add_newspaper(issue.newspaper)  
+            return self.get_issue(paper_id,issue_id)
+       
+        return None
 
 
     def update_editor(self,upd_editor,editor_id):
         editor = self.get_editor(editor_id)
+        if editor:
+            editor.name = upd_editor.name
+            editor.address = upd_editor.address
+            return editor
         
-        editor.name = upd_editor.name
-        editor.address = upd_editor.address
-        return edito
+        return Editor(editor_id=None,name = None,address=None)
+
+    def delete_editor(self,editor_id):
+        editor = self.get_editor(editor_id)
+        if editor:
+            editor.quit_agency()
+            self.editors.remove(editor)
+            return True
+        return False
+
+
+
+    def get_editor_issues(self,editor_id):
+        if self.get_editor(editor_id):
+            return self.get_editor(editor_id).get_issues()
+        
+        return Editor(editor_id=None,name = None,address=None)

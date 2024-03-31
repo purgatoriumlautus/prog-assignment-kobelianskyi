@@ -26,3 +26,18 @@ class Editor(object):
     
     def get_issues(self):
         return self.issues
+    
+
+    def quit_agency(self):
+        for newspaper in self.newspapers:
+            newspaper.delete_editor(self)
+        
+        new_editor = self.issues[0].newspaper.get_editor()
+        for issue in self.issues:
+            if new_editor in issue.newspaper.editors:
+                issue.set_editor(new_editor)
+            else: 
+                new_editor = issue.newspaper.get_editor()
+                issue.set_editor(new_editor)
+
+    
