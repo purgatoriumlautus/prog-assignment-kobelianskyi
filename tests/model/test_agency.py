@@ -23,7 +23,7 @@ def test_add_newspaper_same_id_should_raise_error(agency):
 
     # first adding of newspaper should be okay
     agency.add_newspaper(new_paper)
-
+    
     new_paper2 = Newspaper(paper_id=999,
                           name="Superman Comic",
                           frequency=7,

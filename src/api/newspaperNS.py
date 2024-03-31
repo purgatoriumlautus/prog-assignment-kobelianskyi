@@ -40,9 +40,14 @@ paper_model= newspaper_ns.model('NewspaperModel', {
             help='The publication frequency of the newspaper in days (e.g. 1 for daily papers and 7 for weekly magazines'),
     'price': fields.Float(required=True,
             help='The monthly price of the newspaper (e.g. 12.3)'),
-    
-   
+    'subscriber_amount': fields.Integer()
    })
+
+
+subscriber_model = (newspaper_ns.model("SubscriberPaperModel",{
+    "subscriber_id": fields.Integer(),
+    'name':fields.String
+    }))
 
 
 paper_info_model = newspaper_ns.model('NewspaperInfoModel', {
@@ -55,7 +60,8 @@ paper_info_model = newspaper_ns.model('NewspaperInfoModel', {
     'price': fields.Float(required=True,
             help='The monthly price of the newspaper (e.g. 12.3)'),
     'issues': fields.List(fields.Nested(issue_model,required = True, help="All issues of a particular pages")),
-    'editors': fields.List(fields.Nested(editor_model))
+    'editors': fields.List(fields.Nested(editor_model)),
+    'subscribers': fields.List(fields.Nested(subscriber_model))
    
    })
 
@@ -174,5 +180,14 @@ class SpecifyEditor(Resource):
     @newspaper_ns.expect(editor_id_input_model,validate=True)
     def post(self,paper_id,issue_id):
         return Agency.get_instance().set_editor(paper_id,issue_id,newspaper_ns.payload["editor_id"])
+    
+
+@newspaper_ns.route('/<int:paper_id>/stats')
+class NewspaperStats(Resource):
+
+
+    def get(self,paper_id):
+        return Agency.get_instance().get_newspaper_stats(paper_id)
+    
         
 

@@ -3,6 +3,7 @@ from flask_restx import Api
 
 from .api.newspaperNS import newspaper_ns
 from .api.editorNS import editor_ns
+from .api.subscriberNS import subscriber_ns
 
 from .model.agency import Agency
 
@@ -16,6 +17,7 @@ def create_app():
     # add individual namespaces
     paperroute_api.add_namespace(newspaper_ns)
     paperroute_api.add_namespace(editor_ns)
+    paperroute_api.add_namespace(subscriber_ns)
 
     return paperroute_app
 

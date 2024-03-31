@@ -1,6 +1,5 @@
 from typing import List
 
-from flask_restx import Model
 
 from .issue import Issue
 from .editor import Editor
@@ -8,6 +7,8 @@ from random import randint
 
 
 class Newspaper(object):
+    
+    
     def __init__(self, paper_id: int, name: str, frequency: int, price: float):
         self.paper_id: int = paper_id
         self.name: str = name
@@ -15,10 +16,11 @@ class Newspaper(object):
         self.price: float = price  # the monthly price
         self.issues: List[Issue] = []
         self.editors: List[Editor] = [Editor(editor_id=paper_id,name=name,address=f"{name}'s office")]
+        self.subscribers = []
+        self.subscriber_amount = 0
 
     def add_issue(self,issue):
         issue.issue_id = len(self.issues)+1
-        
         self.issues.append(issue)
         return issue
 
@@ -27,8 +29,8 @@ class Newspaper(object):
         for issue in self.issues:
             if issue_id == issue.issue_id:
                 return issue
-        
         return False
+
 
     def add_editor(self,editor):
         for edit in self.editors:
@@ -52,9 +54,34 @@ class Newspaper(object):
         self.editors.remove(editor)
         
 
+    def get_subscriber(self,subscriber_id):
+        for sub in self.subscribers:
+            if sub.subscriber_id == subscriber_id:
+                return sub
+        return None
+
+    def add_subscriber(self,subscriber):
+        if not self.get_subscriber(subscriber.subscriber_id):
+            self.subscribers.append(subscriber)
+            self.subscriber_amount += 1
+        return subscriber
+        
+
+
     def release_issue(self,issue_id):
         issue = self.get_issue(issue_id)
         if issue:
             return issue.release() #released or already released
-
         return f"ID - {issue_id} WAS NOT FOUND"
+    
+    def get_stats(self):
+        stats = {
+            "paper_id":self.paper_id,
+            "name":self.name,
+            "price":self.price,
+            "frequency":self.frequency,
+            "subscriber_amount":self.subscriber_amount,
+            "montly_revenue":self.subscriber_amount*self.price,
+            "annual_revenue":self.price*self.subscriber_amount*12
+            }
+        return stats
