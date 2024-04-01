@@ -33,3 +33,20 @@ class Subscriber(object):
         yearly_cost = montly_cost*12
         return {"subscriber_id":self.subscriber_id,"name":self.name,"address":self.address,"monthly_cost":montly_cost,"yearly_cost":yearly_cost,"issues_recieved":issues_recieved} 
 
+
+    def receive_issue(self,issue):
+        if issue not in self.received_issues:
+            self.received_issues.append(issue)
+            return True
+        
+        return False
+    
+
+    def check_issues(self):
+        missing_issues = {"issues":[]}
+        for news in self.newspapers:
+            for issue in news.issues:
+                if issue not in self.received_issues and issue.released:
+                    missing_issues["issues"].append({"issue_id":issue.issue_id,"releasedate":issue.releasedate,"newspaper":issue.newspaper.name,"editor":issue.editor.name})
+        
+        return missing_issues

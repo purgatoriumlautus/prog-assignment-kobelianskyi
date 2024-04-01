@@ -43,10 +43,13 @@ paper_model= newspaper_ns.model('NewspaperModel', {
     'subscriber_amount': fields.Integer()
    })
 
+subscriber_id_model = newspaper_ns.model("SubscriberIdModel",{
+    "subscriber_id": fields.Integer()})
 
 subscriber_model = (newspaper_ns.model("SubscriberPaperModel",{
     "subscriber_id": fields.Integer(),
-    'name':fields.String
+    'name':fields.String(),
+    'received_issues':fields.List(fields.Nested(issue_model))
     }))
 
 
@@ -191,3 +194,11 @@ class NewspaperStats(Resource):
     
         
 
+@newspaper_ns.route("/<int:paper_id>/issue/<int:issue_id>/deliver")
+class DeliverIssue(Resource):
+    
+    @newspaper_ns.expect(subscriber_id_model)
+
+    def post(self,paper_id,issue_id):
+        sub_id = newspaper_ns.payload["subscriber_id"]
+        return Agency.get_instance().deliver_issue(paper_id,issue_id,sub_id)    

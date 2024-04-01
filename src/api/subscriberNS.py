@@ -92,3 +92,12 @@ class SubscriberStats(Resource):
 
     def get(self,subscriber_id):
         return Agency.get_instance().get_subsriber_stats(subscriber_id)
+    
+
+@subscriber_ns.route('/<int:subscriber_id>/missingissues')
+class SubscriberMissingIssues(Resource):
+    
+    
+    def get(self,subscriber_id):
+        return Agency.get_instance().get_missing_issues(subscriber_id)
+    

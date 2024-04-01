@@ -208,3 +208,31 @@ class Agency(object):
             return paper.get_stats()
         
         return jsonify(f"PAPER {paper_id} WAS NOT FOUND!")
+    
+
+    def deliver_issue(self,paper_id,issue_id,subscriber_id):
+        paper = self.get_newspaper(paper_id)
+        issue = self.get_issue(paper_id,issue_id)
+        subscriber = self.get_subscriber(subscriber_id)
+        if paper and issue and subscriber:
+            if issue.released:
+                if subscriber.is_subscribed(paper):
+                    if subscriber.receive_issue(issue):
+                        return jsonify(f"Issue was delivered to subscriber {subscriber.name} id -{subscriber.subscriber_id} ")
+                    else:
+                        return jsonify(f"Issue was already delivered to subscriber {subscriber.name} id -{subscriber.subscriber_id} ")
+                else:
+                    return(jsonify(f"Subscriber {subscriber.name} id -{subscriber.subscriber_id} is not subscribed to {paper.name}\nid{paper.paper_id}"))
+            else:
+                return(jsonify(f"Issue id {issue_id} from {paper.name} is not released yet"))
+        else:
+            return(jsonify(f"Paper or Issue or Subscriber was not found please check the ID's!"))
+        
+    
+
+    def get_missing_issues(self,subscriber_id):
+        subscriber = self.get_subscriber(subscriber_id)
+        if subscriber:
+            return subscriber.check_issues()
+        else:
+            return(jsonify(f"Subscriber {subscriber_id} was not found!"))
