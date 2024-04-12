@@ -37,7 +37,7 @@ class Agency(object):
         
         
         if self.get_newspaper(new_paper.paper_id):
-            raise ValueError("A newspaper with ID {} already exists".format(new_paper.paper_id))
+            raise ValueError()
         else:
             self.newspapers.append(new_paper)
     
@@ -50,7 +50,7 @@ class Agency(object):
             paper.price = upd_paper.price
             return paper
         
-        return None
+        return False
     
     
     def all_newspapers(self) -> List[Newspaper]:
@@ -125,7 +125,7 @@ class Agency(object):
             editor.add_issue(issue)
             editor.add_newspaper(issue.newspaper)  
             return self.get_issue(paper_id,issue_id)
-        return None
+        return False
 
 
     def update_editor(self,upd_editor,editor_id):
@@ -135,7 +135,7 @@ class Agency(object):
             editor.address = upd_editor.address
             return editor
         # return Editor(editor_id=None,name = None,address=None)
-        return None
+        return False
 
     def delete_editor(self,editor_id):
         editor = self.get_editor(editor_id)
@@ -150,7 +150,7 @@ class Agency(object):
         if self.get_editor(editor_id):
             return self.get_editor(editor_id).get_issues()
         # return Editor(editor_id=None,name = None,address=None)
-        return None
+        return False
 
     def get_subscribers(self):
         return self.subscribers
@@ -160,13 +160,13 @@ class Agency(object):
         for sub in self.subscribers:
             if sub.subscriber_id == subscriber_id:
                 return sub
-        return None
+        return False
 
 
     def add_subscriber(self,subscriber):
         if not self.get_subscriber(subscriber.subscriber_id):
             self.subscribers.append(subscriber)
-        
+            return subscriber
         
         return False
         
@@ -224,15 +224,15 @@ class Agency(object):
             if issue.released:
                 if subscriber.is_subscribed(paper):
                     if subscriber.receive_issue(issue):
-                        return jsonify(f"Issue was delivered to subscriber {subscriber.name} id -{subscriber.subscriber_id} ")
+                        return (f"Issue was delivered to subscriber {subscriber.name} id -{subscriber.subscriber_id}")
                     else:
-                        return jsonify(f"Issue was already delivered to subscriber {subscriber.name} id -{subscriber.subscriber_id} ")
+                        return (f"Issue was already delivered to subscriber {subscriber.name} id -{subscriber.subscriber_id}")
                 else:
-                    return(jsonify(f"Subscriber {subscriber.name} id -{subscriber.subscriber_id} is not subscribed to {paper.name}\nid{paper.paper_id}"))
+                    return((f"Subscriber {subscriber.name} id -{subscriber.subscriber_id} is not subscribed to {paper.name} id{paper.paper_id}"))
             else:
-                return(jsonify(f"Issue id {issue_id} from {paper.name} is not released yet"))
+                return((f"Issue id {issue_id} from {paper.name} is not released yet"))
         else:
-            return(jsonify(f"Paper or Issue or Subscriber was not found please check the ID's!"))
+            return("Paper or Issue or Subscriber was not found please check the ID's!")
         
     
 
@@ -241,4 +241,4 @@ class Agency(object):
         if subscriber:
             return subscriber.check_issues()
         else:
-            return(jsonify(f"Subscriber {subscriber_id} was not found!"))
+            return((f"Subscriber {subscriber_id} was not found!"))

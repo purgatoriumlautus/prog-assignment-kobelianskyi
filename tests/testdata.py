@@ -10,7 +10,8 @@ def create_newspapers(agency: Agency):
     paper2 = Newspaper(paper_id=101, name="Heute", frequency=1, price=1.12)
     paper3 = Newspaper(paper_id=115, name="Wall Street Journal", frequency=1, price=3.00)
     paper4 = Newspaper(paper_id=125, name="National Geographic", frequency=30, price=34.00)
-    agency.newspapers.extend([paper1, paper2, paper3, paper4])
+    paper5 = Newspaper(paper_id=195, name="Ukraine", frequency=5, price=98)
+    agency.newspapers.extend([paper1, paper2, paper3, paper4,paper5])
     issue1 = Issue(releasedate="25.07.2004",
                         pages=6,
                             newspaper=paper1)

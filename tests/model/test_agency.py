@@ -16,28 +16,26 @@ def test_add_newspaper(agency: Agency):
     agency.add_newspaper(new_paper)
     assert len(agency.all_newspapers()) == before + 1
 
-
-# def test_add_newspaper_same_id_should_raise_error(agency):
+@pytest.mark.xfail(raises=ValueError)
+def test_add_newspaper_same_id_should_raise_error(agency):
    
-#     new_paper = Newspaper(paper_id=999,
-#                           name="Simpsons Comic",
-#                           frequency=7,
-#                           price=3.14)
+    new_paper = Newspaper(paper_id=999,
+                          name="Simpsons Comic",
+                          frequency=7,
+                          price=3.14)
 
-#     # first adding of newspaper should be okay
-#     agency.add_newspaper(new_paper)
+    # first adding of newspaper should be okay
+    agency.add_newspaper(new_paper)
     
     
-#     new_paper2 = Newspaper(paper_id=999,
-#                           name="Superman Comic",
-#                           frequency=7,
-#                           price=13.14)
-
-#     with pytest.raises(ValueError, match='A newspaper with ID 999 already exists'):  # <-- this allows us to test for exceptions
-#         # this one should raise an exception!
-#         agency.add_newspaper(new_paper2)
+    new_paper2 = Newspaper(paper_id=999,
+                          name="Superman Comic",
+                          frequency=7,
+                          price=13.14)
+    agency.add_newspaper(new_paper2)
     
 
+       
 
 
 
@@ -108,9 +106,9 @@ def test_wrongid_changing_newspaper(agency: Agency):
                           frequency=2,
                           price=8)
     
-    upd_paper = agency.update_newspaper(new_paper) #update_newspaper returns NONE when paper id is not found
+    upd_paper = agency.update_newspaper(new_paper) #update_newspaper returns Falsewhen paper id is not found
     
-    assert upd_paper == None
+    assert upd_paper == False
 
     #NOW WE HAVE TO ASSERT THAT THE OLD PAPER DID NOT CHANGE
     assert old_paper.paper_id == agency.get_newspaper(899).paper_id
@@ -191,7 +189,7 @@ def test_changing_editor(agency: Agency):
     
     assert updated_editor.name == new_editor.name
     assert updated_editor.address == new_editor.address
-    assert agency.update_editor(new_editor,editor_id=7577) == None #THIS ID IS WRONG SO IT SOULD RETURN NONE
+    assert agency.update_editor(new_editor,editor_id=7577) == False #THIS ID IS WRONG SO IT SOULD RETURN False
 
 
 
@@ -224,7 +222,7 @@ def test_getting_all_editor_issues(agency: Agency):
     assert issue2 in editor.issues
     assert len(editor.issues) == len(agency.get_editor_issues(editor_id=33))
     assert agency.get_editor_issues(editor_id=33) == editor.issues
-    assert agency.get_editor_issues(editor_id=59493) == None #as our editor with id 59493 does not exist and was not found it should return None
+    assert agency.get_editor_issues(editor_id=59493) == False #as our editor with id 59493 does not exist and was not found it should return False
 
 
 def test_setting_editor_for_issue(agency: Agency):
@@ -236,9 +234,9 @@ def test_setting_editor_for_issue(agency: Agency):
     assert editor in paper.editors
     assert paper in editor.newspapers
     #now trying to plug in wrong values of paper_id or issue_id or editor_id
-    assert agency.set_editor(paper_id=paper.paper_id,issue_id=54,editor_id=editor.editor_id) == None
-    assert agency.set_editor(paper_id=paper.paper_id,issue_id=issue1.issue_id,editor_id=99932) == None
-    assert agency.set_editor(paper_id=129394,issue_id=issue1.issue_id,editor_id=editor.editor_id) == None
+    assert agency.set_editor(paper_id=paper.paper_id,issue_id=54,editor_id=editor.editor_id) == False
+    assert agency.set_editor(paper_id=paper.paper_id,issue_id=issue1.issue_id,editor_id=99932) == False
+    assert agency.set_editor(paper_id=129394,issue_id=issue1.issue_id,editor_id=editor.editor_id) == False
     
 
 def test_release_issue(agency):
@@ -275,7 +273,7 @@ def test_get_sub_by_id(agency):
     test_sub = agency.subscribers[0]
     assert agency.get_subscriber(test_sub.subscriber_id) == test_sub
     assert agency.get_subscriber(subscriber_id=228) == subscriber
-    assert agency.get_subscriber(subscriber_id=1030) == None #It returns None if subscriber was not found
+    assert agency.get_subscriber(subscriber_id=1030) == False #It returns False if subscriber was not found
 
 
 
@@ -302,6 +300,159 @@ def test_update_sub(agency):
 
 
 
-#TODO: TEST SUBSCRIBER/SUBSCRIBE TEST SUBSCRIBER/STATS AND SUBSCRIBER/MISSINGISSUES 
-#TEST PAPER/STATS
-#TEST ISSUE/DELIVER
+def test_subscribe(agency):
+    subscriber = Subscriber(subscriber_id=2507,name="Simon",address="Spittelau")
+    agency.add_subscriber(subscriber)
+    paper = agency.get_newspaper(paper_id=555)
+    
+    before_in_ns = len(paper.subscribers)
+    before_in_sub = len(subscriber.newspapers)
+    agency.subscribe(paper_id=555,subscriber_id=2507)
+    assert len(paper.subscribers) == before_in_ns+1
+    assert len(subscriber.newspapers) == before_in_sub+1
+    assert paper in subscriber.newspapers
+    assert subscriber in paper.subscribers
+    assert agency.subscribe(paper_id=594394,subscriber_id=2507) == False #will return fALSE WHEN paper or subscriber id was not found
+    assert agency.subscribe(paper_id=555,subscriber_id=30549349) == False
+
+
+def test_deliver_issue(agency):
+    paper = Newspaper(paper_id=533,name = "Kharkiv News",frequency=5,price = 80)
+    issue = Issue(releasedate="Today",pages=5)
+    sub = Subscriber(subscriber_id=4567,name = "Hlib",address="Olofmeister strasse 93c")
+    
+    agency.add_newspaper(paper)
+    agency.add_subscriber(sub)
+    agency.create_issue(paper_id=533,issue=issue)
+    assert agency.deliver_issue(paper_id=533,issue_id=1,subscriber_id=4567) == f"Issue id {issue.issue_id} from {paper.name} is not released yet" # when trying to deliver unreleased issue
+    agency.release_issue(paper_id=533,issue_id=1)
+    assert agency.deliver_issue(paper_id=533,issue_id=1,subscriber_id=4567) == f"Subscriber {sub.name} id -{sub.subscriber_id} is not subscribed to {paper.name} id{paper.paper_id}" #when trying to send the issue to the subscriber who is not subscribed to the newspaper
+    agency.subscribe(paper_id=533,subscriber_id=4567)
+    assert agency.deliver_issue(paper_id=533,issue_id=1,subscriber_id=4567) == f"Issue was delivered to subscriber {sub.name} id -{sub.subscriber_id}"
+    assert agency.deliver_issue(paper_id=533,issue_id=1,subscriber_id=4567) == f"Issue was already delivered to subscriber {sub.name} id -{sub.subscriber_id}" #IF WE TRY TO DELIVER ONCE AGAIN IT WILL NOTIFY THAT THE ISSUE WAS ALREADY DELIVERED TO SUB
+    assert issue in sub.received_issues
+    assert len(sub.received_issues)== 1
+    assert agency.deliver_issue(paper_id=1494994,issue_id=1,subscriber_id=4567) == "Paper or Issue or Subscriber was not found please check the ID's!" #returns when something is missing
+    assert agency.deliver_issue(paper_id=533,issue_id=2,subscriber_id=4567) == "Paper or Issue or Subscriber was not found please check the ID's!"
+    assert agency.deliver_issue(paper_id=533,issue_id=1,subscriber_id=456777) == "Paper or Issue or Subscriber was not found please check the ID's!"
+
+
+
+
+
+def test_sub_stats(agency):
+    paper1 = Newspaper(paper_id=7777,name="Space X",frequency=4,price=10)
+    paper2 = Newspaper(paper_id=888,name="Cinema News",frequency=2,price=30)
+    sub = Subscriber(subscriber_id=666,name="Lukas",address="Manchester street")
+    issue1 = Issue(releasedate="12.4.2012",pages=12)
+    issue2 = Issue(releasedate="08.11.2006",pages=4)
+    
+    agency.add_newspaper(paper1)
+    agency.add_newspaper(paper2)
+    agency.add_subscriber(sub)
+    agency.create_issue(paper_id=888,issue=issue1)
+    agency.create_issue(paper_id=7777,issue=issue2)
+    
+    agency.subscribe(paper_id=888,subscriber_id=666)
+    agency.release_issue(paper_id=888,issue_id=1)
+    agency.release_issue(paper_id=7777,issue_id=1)
+    
+    agency.deliver_issue(paper_id=888,issue_id=1,subscriber_id=666)
+    stats = agency.get_subsriber_stats(subcriber_id=666)
+    
+    assert stats == {"subscriber_id":sub.subscriber_id,"name":sub.name,"address":sub.address,"monthly_cost":30,"yearly_cost":360,"issues_recieved":1}
+ 
+    agency.subscribe(paper_id=7777,subscriber_id=666)
+    agency.deliver_issue(paper_id=7777,issue_id=1,subscriber_id=666)
+    stats_with_2 = agency.get_subsriber_stats(subcriber_id=666)
+    
+    
+    assert stats_with_2 == {"subscriber_id":sub.subscriber_id,"name":sub.name,"address":sub.address,"monthly_cost":40,"yearly_cost":480,"issues_recieved":2}
+    assert not agency.get_subsriber_stats(subcriber_id=3129394) # will return false as ID was not found
+
+
+def test_paper_stats(agency):
+    paper = Newspaper(paper_id=57,name = "Lokomotiv",frequency=4,price=100)
+    sub1 = Subscriber(subscriber_id=953,name = "Felix",address="Kilimajaro")
+    sub2 = Subscriber(subscriber_id=593,name = "Ulrich",address="Untere 21")
+    sub3 = Subscriber(subscriber_id=395,name = "Luke",address="Wien Heilgenstadt")
+    agency.add_newspaper(paper)
+    agency.add_subscriber(sub1),agency.add_subscriber(sub2),agency.add_subscriber(sub3)
+    assert agency.get_newspaper_stats(paper_id=57) == {
+            "paper_id":paper.paper_id,
+            "name":paper.name,
+            "price":paper.price,
+            "frequency":paper.frequency,
+            "subscriber_amount":0,
+            "montly_revenue":0,
+            "annual_revenue":0
+            }
+    agency.subscribe(paper_id=57,subscriber_id=953)
+    assert agency.get_newspaper_stats(paper_id=57) == {
+            "paper_id":paper.paper_id,
+            "name":paper.name,
+            "price":paper.price,
+            "frequency":paper.frequency,
+            "subscriber_amount":1,
+            "montly_revenue":100,
+            "annual_revenue":1200
+            }
+    agency.subscribe(paper_id=57,subscriber_id=593)
+    agency.subscribe(paper_id=57,subscriber_id=395)
+    assert agency.get_newspaper_stats(paper_id=57) == {
+            "paper_id":paper.paper_id,
+            "name":paper.name,
+            "price":paper.price,
+            "frequency":paper.frequency,
+            "subscriber_amount":3,
+            "montly_revenue":300,
+            "annual_revenue":3600
+            }
+    assert agency.get_newspaper_stats(paper_id=392949) == False # If no paper with this ID FOUND IT RETURNS FALSE
+
+
+
+def test_missing_issues(agency):
+    paper = Newspaper(paper_id=69,name = "Oxford",frequency=2,price=10)
+    agency.add_newspaper(paper)
+    issue1 = Issue(releasedate="25.07.2004",pages=19)
+    issue2 = Issue(releasedate="Tomorrow",pages=1)
+    agency.create_issue(paper_id=69,issue=issue1)
+    agency.create_issue(paper_id=69,issue=issue2)
+    sub = Subscriber(subscriber_id=46,name= "Valentina",address="Lomanosova 24b")
+    agency.add_subscriber(sub)
+    
+    assert agency.get_missing_issues(subscriber_id=46) == {"issues":[]} # it is empty as our sub is not subscribed to anything
+    
+    agency.subscribe(paper_id=69,subscriber_id=46)
+   
+    assert agency.get_missing_issues(subscriber_id=46) == {"issues":[]} #still empty as no issues were released
+    
+    agency.release_issue(paper_id=69,issue_id=1)
+    assert agency.get_missing_issues(subscriber_id=46) == {"issues":[{"issue_id":issue1.issue_id,
+                                                                      "releasedate":issue1.releasedate,
+                                                                      "newspaper":issue1.newspaper.name}]} 
+    
+    agency.release_issue(paper_id=69,issue_id=2)
+
+    assert agency.get_missing_issues(subscriber_id=46) == {"issues":[{"issue_id":issue1.issue_id,
+                                                                      "releasedate":issue1.releasedate,
+                                                                      "newspaper":issue1.newspaper.name},
+                                                                      {"issue_id":issue2.issue_id,
+                                                                       "releasedate":issue2.releasedate,
+                                                                       "newspaper":issue2.newspaper.name}]} 
+
+    agency.deliver_issue(paper_id=69,issue_id=1,subscriber_id=46)
+
+    assert agency.get_missing_issues(subscriber_id=46) == {"issues":[{"issue_id":issue2.issue_id,
+                                                                       "releasedate":issue2.releasedate,
+                                                                       "newspaper":issue2.newspaper.name}]}
+
+   
+    agency.deliver_issue(paper_id=69,issue_id=2,subscriber_id=46)
+    
+    assert agency.get_missing_issues(subscriber_id=46) == {"issues":[]} 
+    assert agency.get_missing_issues(subscriber_id=493599593) == "Subscriber 493599593 was not found!"
+
+
+    

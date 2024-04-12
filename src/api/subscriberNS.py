@@ -1,5 +1,5 @@
 from flask import jsonify
-from flask_restx import Namespace, reqparse, Resource, fields
+from flask_restx import Namespace, reqparse, Resource, fields,abort
 from time import time_ns
 from ..model.agency import Agency
 from ..model.newspaper import Newspaper
@@ -57,7 +57,11 @@ class SubscriberApi(Resource):
     def post(self):
         id = int(str((time_ns()))[8:15])
         subscriber = Subscriber(subscriber_id=id,name = subscriber_ns.payload["name"],address= subscriber_ns.payload["address"])
-        return Agency.get_instance().add_subscriber(subscriber)
+        status = Agency.get_instance().add_subscriber(subscriber)
+        if status:
+            return status
+        else:
+            abort(422,{"error":"id is already occupied"})
     
 
 
@@ -66,17 +70,28 @@ class SubscriberId(Resource):
 
     @subscriber_ns.marshal_with(subscriber_info_model)
     def get(self,subscriber_id):
-        return Agency.get_instance().get_subscriber(subscriber_id)
-    
+        sub = Agency.get_instance().get_subscriber(subscriber_id)
+        if sub:
+            return sub
+        else:
+            abort(422,{"error":"id is not correct"})
 
     @subscriber_ns.expect(subscriber_input_model)
     def post(self,subscriber_id):
         upd_sub = Subscriber(subscriber_id=subscriber_id,name = subscriber_ns.payload["name"],address=subscriber_ns.payload["address"])
-        return Agency.get_instance().update_subscriber(subscriber_id,upd_sub)
+        status = Agency.get_instance().update_subscriber(subscriber_id,upd_sub)
+        if status:
+            return status
+        else:
+            abort(422,{"error":"id is not correct"})
     
 
     def delete(self,subscriber_id):
-        return Agency.get_instance().delete_subscriber(subscriber_id)
+        status = Agency.get_instance().delete_subscriber(subscriber_id)
+        if status: 
+            return status
+        else:
+            abort(422,{"error":"id is not correct"})
     
 
 @subscriber_ns.route('/<int:subscriber_id>/subscribe')
@@ -84,14 +99,20 @@ class SubcriberSubcribe(Resource):
 
     @subscriber_ns.expect(subscribe_model)
     def post(self,subscriber_id):
-        return Agency.get_instance().subscribe(subscriber_ns.payload["paper_id"],subscriber_id)
-
+        status = Agency.get_instance().subscribe(subscriber_ns.payload["paper_id"],subscriber_id)
+        if status:
+            return status
+        else:
+            abort(422,{"error":"id is not correct"})
 
 @subscriber_ns.route('/<int:subscriber_id>/stats')
 class SubscriberStats(Resource):
-
     def get(self,subscriber_id):
-        return Agency.get_instance().get_subsriber_stats(subscriber_id)
+        status = Agency.get_instance().get_subsriber_stats(subscriber_id)
+        if status:
+            return status
+        else:
+            abort(422,{"error":"id is not correct"})
     
 
 @subscriber_ns.route('/<int:subscriber_id>/missingissues')
@@ -99,5 +120,5 @@ class SubscriberMissingIssues(Resource):
     
     
     def get(self,subscriber_id):
-        return Agency.get_instance().get_missing_issues(subscriber_id)
+        return jsonify(Agency.get_instance().get_missing_issues(subscriber_id))
     

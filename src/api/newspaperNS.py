@@ -1,5 +1,5 @@
 from flask import jsonify
-from flask_restx import Namespace, reqparse, Resource, fields
+from flask_restx import Namespace, reqparse, Resource, fields,abort
 from time import time_ns
 from ..model.agency import Agency
 from ..model.newspaper import Newspaper
@@ -66,7 +66,8 @@ paper_info_model = newspaper_ns.model('NewspaperInfoModel', {
             help='The monthly price of the newspaper (e.g. 12.3)'),
     'issues': fields.List(fields.Nested(issue_model,required = True, help="All issues of a particular pages")),
     'editors': fields.List(fields.Nested(editor_model)),
-    'subscribers': fields.List(fields.Nested(subscriber_model))
+    'subscribers': fields.List(fields.Nested(subscriber_model)),
+    'subscriber_amount':fields.Integer()
    
    })
 
@@ -119,7 +120,10 @@ class NewspaperID(Resource):
     @newspaper_ns.marshal_with(paper_info_model, envelope='newspaper')
     def get(self, paper_id):
         search_result = Agency.get_instance().get_newspaper(paper_id)
-        return search_result
+        if search_result:
+            return search_result
+        else:
+            abort(422,{"error":"id is not correct"})
 
     @newspaper_ns.doc(parser=paper_input_model, description="Update a new newspaper")
     @newspaper_ns.expect(paper_input_model, validate=True)
@@ -130,7 +134,12 @@ class NewspaperID(Resource):
                               name=newspaper_ns.payload['name'],
                               frequency=newspaper_ns.payload['frequency'],
                               price=newspaper_ns.payload['price'])
-        return Agency.get_instance().update_newspaper(upd_paper)
+        new_paper = Agency.get_instance().update_newspaper(upd_paper)
+        if new_paper:
+            return new_paper
+        else:
+            abort(422,{"error":"id is not correct"})
+
             
 
 
@@ -138,7 +147,8 @@ class NewspaperID(Resource):
     def delete(self, paper_id):
         targeted_paper = Agency.get_instance().get_newspaper(paper_id)
         if not targeted_paper:
-            return jsonify(f"Newspaper with ID {paper_id} was not found")
+            abort(422,{"error":"id is not correct"})
+
         Agency.get_instance().remove_newspaper(targeted_paper)
         return jsonify(f"Newspaper with ID {paper_id} was removed")
 
@@ -149,7 +159,11 @@ class IssueApi(Resource):
     @newspaper_ns.marshal_with(issue_model)
     def get(self,paper_id):
         issues = Agency.get_instance().all_issues(paper_id)
-        return issues
+        if issues:
+            return issues
+        else:
+            abort(422,{"error":"id is not correct"})
+
     
 
     @newspaper_ns.expect(issue_input_model)
@@ -162,7 +176,8 @@ class IssueApi(Resource):
             Agency.get_instance().create_issue(paper_id=paper_id,issue=issue)
             return jsonify(f"Issue number - {issue.issue_id} has been added to {Agency.get_instance().get_newspaper(paper_id).name} newspaper")
         
-        return jsonify(f"Newspaper with id - {paper_id} wasn't found")
+        else:
+            abort(422,{"error":"id is not correct"})
 
 
 
@@ -172,13 +187,23 @@ class IssueId(Resource):
     @newspaper_ns.marshal_with(issue_model)
     def get(self,paper_id,issue_id):
         issue = Agency.get_instance().get_issue(paper_id,issue_id)
-        return issue
+        if issue:
+            return issue
+        else:
+            abort(422,{"error":"id is not correct"})
+    
     
 
 @newspaper_ns.route('/<int:paper_id>/issue/<int:issue_id>/release',methods=['POST'])
 class ReleaseIssue(Resource):
     def post(self,paper_id,issue_id):
-        return Agency.get_instance().release_issue(paper_id,issue_id)
+        issue = Agency.get_instance().release_issue(paper_id,issue_id)
+        if issue:
+            return issue
+        else:
+            abort(422,{"error":"id is not correct"})
+
+
 
 
 @newspaper_ns.route('/<int:paper_id>/issue/<int:issue_id>/editor',methods=['POST'])
@@ -186,7 +211,11 @@ class SpecifyEditor(Resource):
     @newspaper_ns.marshal_with(issue_model)
     @newspaper_ns.expect(editor_id_input_model,validate=True)
     def post(self,paper_id,issue_id):
-        return Agency.get_instance().set_editor(paper_id,issue_id,newspaper_ns.payload["editor_id"])
+        status = Agency.get_instance().set_editor(paper_id,issue_id,newspaper_ns.payload["editor_id"])
+        if status:
+            return status
+        else:
+            abort(422,{"error":"id is not correct"})
     
 
 @newspaper_ns.route('/<int:paper_id>/stats')
@@ -194,7 +223,12 @@ class NewspaperStats(Resource):
 
 
     def get(self,paper_id):
-        return Agency.get_instance().get_newspaper_stats(paper_id)
+        paper = Agency.get_instance().get_newspaper_stats(paper_id)
+        if paper:
+            return paper
+        else:
+            abort(422,{"error":"id is not correct"})
+    
     
         
 
@@ -205,4 +239,4 @@ class DeliverIssue(Resource):
 
     def post(self,paper_id,issue_id):
         sub_id = newspaper_ns.payload["subscriber_id"]
-        return Agency.get_instance().deliver_issue(paper_id,issue_id,sub_id)    
+        return jsonify(Agency.get_instance().deliver_issue(paper_id,issue_id,sub_id))

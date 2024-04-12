@@ -1,5 +1,6 @@
 from flask import jsonify
-from flask_restx import Namespace, Resource, fields
+from flask_restx import Namespace, Resource, fields,abort
+
 from time import time_ns
 from ..model.agency import Agency
 
@@ -56,7 +57,11 @@ class EditorAPI(Resource):
     def post(self):
         id = int(str(time_ns())[9:17][::-1])
         editor = Editor(editor_id=id, name = editor_ns.payload['name'],address=editor_ns.payload['address'])
-        return Agency.get_instance().add_editor(editor)
+        status = Agency.get_instance().add_editor(editor)
+        if status:
+            return status
+        else:
+            abort(422,{"error":"id was already occupied"})
 
     @editor_ns.marshal_list_with(editor_model)
     def get(self):
@@ -67,14 +72,21 @@ class EditorId(Resource):
     
     @editor_ns.marshal_with(editor_info_model)
     def get(self,editor_id):
-        return Agency.get_instance().get_editor(editor_id)
-    
+        editor = Agency.get_instance().get_editor(editor_id)
+        if editor:
+            return editor
+        else:
+            abort(422,{"error":"id is not correct"})
 
     @editor_ns.marshal_with(editor_model)
     @editor_ns.expect(editor_input_model)
     def post(self,editor_id):
         upd_editor = Editor(editor_id=editor_id,name = editor_ns.payload["name"],address=editor_ns.payload["address"])
-        return Agency.get_instance().update_editor(upd_editor,editor_id)
+        status = Agency.get_instance().update_editor(upd_editor,editor_id)
+        if status:
+            return status
+        else:
+            abort(422,{"error":"id is not correct"})
     
 
     # @editor_ns.marshal_with(editor_model)
@@ -90,4 +102,8 @@ class EditorId(Resource):
 class EditorIssues(Resource):
     @editor_ns.marshal_list_with(issue_model)
     def get(self,editor_id):
-        return Agency.get_instance().get_editor_issues(editor_id)
+        issues = Agency.get_instance().get_editor_issues(editor_id)
+        if issues:
+            return issues
+        else:
+            abort(422,{"error":"id is not correct"})
