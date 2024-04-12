@@ -2,6 +2,7 @@ from typing import List, Union, Optional
 from flask import jsonify
 from .newspaper import Newspaper
 from .editor import Editor
+from .issue import Issue
 from .subscriber import Subscriber
 
 
@@ -34,10 +35,13 @@ class Agency(object):
     def add_newspaper(self, new_paper: Newspaper):
         #TODO: assert that ID does not exist  yet (or create a new one)
         
-        if not self.get_newspaper(new_paper.paper_id):
+        
+        if self.get_newspaper(new_paper.paper_id):
+            raise ValueError("A newspaper with ID {} already exists".format(new_paper.paper_id))
+        else:
             self.newspapers.append(new_paper)
-
-
+    
+    
     def update_newspaper(self,upd_paper):
         paper =  self.get_newspaper(upd_paper.paper_id)
         if paper:
@@ -75,15 +79,21 @@ class Agency(object):
     def create_issue(self, paper_id: Union[int,str],issue = None) -> Optional[Newspaper]:
         paper = self.get_newspaper(paper_id)
         if paper:
+            issue.newspaper = paper
             return paper.add_issue(issue)
+        
         return False
     
 
     def release_issue(self,paper_id,issue_id):
         paper = self.get_newspaper(paper_id)
-        if paper:
-            return(jsonify(f"{paper.release_issue(issue_id)}")) #can be released now or already released
-        return jsonify(f"Paper WAS NOT FOUND!")
+        issue = self.get_issue(paper_id=paper_id,issue_id=issue_id)
+        
+        if paper and issue:
+            issue.released = True
+            return True
+        
+        return False
         
         
     
@@ -102,7 +112,8 @@ class Agency(object):
         if not self.get_editor(editor.editor_id):
             self.editors.append(editor)
             return editor
-
+        else:
+            return False
     
     def set_editor(self,paper_id,issue_id,editor_id):
         editor = self.get_editor(editor_id)
@@ -123,8 +134,8 @@ class Agency(object):
             editor.name = upd_editor.name
             editor.address = upd_editor.address
             return editor
-        return Editor(editor_id=None,name = None,address=None)
-
+        # return Editor(editor_id=None,name = None,address=None)
+        return None
 
     def delete_editor(self,editor_id):
         editor = self.get_editor(editor_id)
@@ -138,8 +149,8 @@ class Agency(object):
     def get_editor_issues(self,editor_id):
         if self.get_editor(editor_id):
             return self.get_editor(editor_id).get_issues()
-        return Editor(editor_id=None,name = None,address=None)
-    
+        # return Editor(editor_id=None,name = None,address=None)
+        return None
 
     def get_subscribers(self):
         return self.subscribers
@@ -157,7 +168,7 @@ class Agency(object):
             self.subscribers.append(subscriber)
         
         
-        return subscriber
+        return False
         
     
     
@@ -166,18 +177,18 @@ class Agency(object):
         if subscriber:
             subscriber.name = upd_subscriber.name
             subscriber.address = upd_subscriber.address
-            return jsonify(f"Subscriber with id {subscriber_id} was successfully updated")
+            return True
         else:
-            return jsonify(f"ID {subscriber_id} WAS NOT FOUND")
+            return False
         
 
     def delete_subscriber(self,subscriber_id):
         subscriber = self.get_subscriber(subscriber_id)
         if subscriber:
             self.subscribers.remove(subscriber)
-            return jsonify(f"Subscriber {subscriber.name} with id {subscriber_id} was successfully deleted")
-        
-        return jsonify(f"ID {subscriber_id} was not FOUND!")
+            
+            return True
+        return False
     
 
     def subscribe(self,paper_id,subscriber_id):
@@ -186,20 +197,15 @@ class Agency(object):
         if paper and sub:
             paper.add_subscriber(sub)
             sub.subscribe_to(paper)
-            return jsonify(f"subscriber {sub.name} with id {sub.subscriber_id} successfully subscribed to {paper.name} with id {paper_id}")
-        if paper and not sub:
-            return jsonify(f"subscriber id {subscriber_id} WAS NOT FOUND!")
-        if sub and not paper:
-            return jsonify(f"paper id {paper_id} WAS NOT FOUND!")
-        if not sub and not paper:
-            return jsonify(f"paper id {paper_id} and subscriber id {subscriber_id} WAS NOT FOUND! ")
-
+            return True
+        else:
+            return False
 
     def get_subsriber_stats(self,subcriber_id):
         sub = self.get_subscriber(subcriber_id)
         if sub:
             return sub.get_stats()
-        return jsonify(f"subscriber id {subcriber_id} WAS NOT FOUND!")
+        return False
     
 
     def get_newspaper_stats(self,paper_id):
@@ -207,7 +213,7 @@ class Agency(object):
         if paper:
             return paper.get_stats()
         
-        return jsonify(f"PAPER {paper_id} WAS NOT FOUND!")
+        return False
     
 
     def deliver_issue(self,paper_id,issue_id,subscriber_id):

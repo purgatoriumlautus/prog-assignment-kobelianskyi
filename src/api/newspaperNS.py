@@ -14,6 +14,7 @@ editor_model = newspaper_ns.model('EditorNewsModel',{
     'name': fields.String(required = True,help = "Name of the editor")
     })
 
+
 editor_id_input_model = newspaper_ns.model("Editor_Id_InputModel",{
     "editor_id":fields.Integer(required=True,help=" Unique editor's id")
     })
@@ -30,6 +31,7 @@ issue_input_model = newspaper_ns.model('IssueInputModel',{
     'release_date': fields.String(required = True,help = "Date of the release of an issue"),
     'pages': fields.Integer(required = True, help="Number of pages of an issue")
     })
+
 
 paper_model= newspaper_ns.model('NewspaperModel', {
     'paper_id': fields.Integer(required=False,
@@ -122,7 +124,7 @@ class NewspaperID(Resource):
     @newspaper_ns.doc(parser=paper_input_model, description="Update a new newspaper")
     @newspaper_ns.expect(paper_input_model, validate=True)
     @newspaper_ns.marshal_with(paper_model, envelope='newspaper')
-    def put(self, paper_id):
+    def post(self, paper_id):
         # TODO: update newspaper
         upd_paper = Newspaper(paper_id=paper_id,
                               name=newspaper_ns.payload['name'],
@@ -155,12 +157,14 @@ class IssueApi(Resource):
         news = Agency.get_instance().get_newspaper(paper_id)
         if news:
             issue = Issue(releasedate=newspaper_ns.payload['release_date'],
-                        pages=newspaper_ns.payload['pages'],
-                            newspaper= news)
+                        pages=newspaper_ns.payload['pages'])
             
             Agency.get_instance().create_issue(paper_id=paper_id,issue=issue)
             return jsonify(f"Issue number - {issue.issue_id} has been added to {Agency.get_instance().get_newspaper(paper_id).name} newspaper")
+        
         return jsonify(f"Newspaper with id - {paper_id} wasn't found")
+
+
 
 @newspaper_ns.route('/<int:paper_id>/issue/<int:issue_id>')
 class IssueId(Resource):

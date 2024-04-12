@@ -1,12 +1,11 @@
 from flask import jsonify
-from flask_restx import Namespace, reqparse, Resource, fields
+from flask_restx import Namespace, Resource, fields
 from time import time_ns
 from ..model.agency import Agency
-from ..model.newspaper import Newspaper
-from ..model.issue import Issue
+
+
 from ..model.editor import Editor
 from .newspaperNS import paper_model
-
 
 editor_ns = Namespace("editor", description="Editor related operations")
 
@@ -73,7 +72,7 @@ class EditorId(Resource):
 
     @editor_ns.marshal_with(editor_model)
     @editor_ns.expect(editor_input_model)
-    def put(self,editor_id):
+    def post(self,editor_id):
         upd_editor = Editor(editor_id=editor_id,name = editor_ns.payload["name"],address=editor_ns.payload["address"])
         return Agency.get_instance().update_editor(upd_editor,editor_id)
     

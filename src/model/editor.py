@@ -13,8 +13,10 @@ class Editor(object):
     
 
     def add_issue(self,issue):
-        self.issues.append(issue)
-        
+        if issue not in self.issues:
+            self.issues.append(issue)
+        else:
+            return False
         
     def add_newspaper(self,newspaper):
         for news in self.newspapers:
@@ -31,13 +33,14 @@ class Editor(object):
     def quit_agency(self):
         for newspaper in self.newspapers:
             newspaper.delete_editor(self)
-        
-        new_editor = self.issues[0].newspaper.get_editor()
-        for issue in self.issues:
-            if new_editor in issue.newspaper.editors:
-                issue.set_editor(new_editor)
-            else: 
-                new_editor = issue.newspaper.get_editor()
-                issue.set_editor(new_editor)
+            self.newspapers = []
+        if len(self.issues) != 0:
+            new_editor = self.issues[0].newspaper.get_editor()
+            for issue in self.issues:
+                if new_editor in issue.newspaper.editors:
+                    issue.set_editor(new_editor)
+                else: 
+                    new_editor = issue.newspaper.get_editor()
+                    issue.set_editor(new_editor)
 
     

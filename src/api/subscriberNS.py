@@ -70,7 +70,7 @@ class SubscriberId(Resource):
     
 
     @subscriber_ns.expect(subscriber_input_model)
-    def put(self,subscriber_id):
+    def post(self,subscriber_id):
         upd_sub = Subscriber(subscriber_id=subscriber_id,name = subscriber_ns.payload["name"],address=subscriber_ns.payload["address"])
         return Agency.get_instance().update_subscriber(subscriber_id,upd_sub)
     

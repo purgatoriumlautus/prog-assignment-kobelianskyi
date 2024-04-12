@@ -68,12 +68,9 @@ class Newspaper(object):
         
 
 
-    def release_issue(self,issue_id):
-        issue = self.get_issue(issue_id)
-        if issue:
-            return issue.release() #released or already released
-        return f"ID - {issue_id} WAS NOT FOUND"
-    
+
+
+
     def get_stats(self):
         stats = {
             "paper_id":self.paper_id,
