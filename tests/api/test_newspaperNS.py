@@ -272,8 +272,8 @@ def test_editor_for_issue(client,agency):
     assert response3.get_json()["message"] == "{'error': 'id is not correct'}"
 
     response4 = client.post("/newspaper/195/issue/1/editor",json={'editor_id':editor.editor_id+24}) # testing wrong editor_id
-    assert response3.status_code == 422
-    assert response3.get_json()["message"] == "{'error': 'id is not correct'}"
+    assert response4.status_code == 422
+    assert response4.get_json()["message"] == "{'error': 'id is not correct'}"
 
 
 def test_paper_stats(client,agency):

@@ -120,5 +120,9 @@ class SubscriberMissingIssues(Resource):
     
     
     def get(self,subscriber_id):
-        return jsonify(Agency.get_instance().get_missing_issues(subscriber_id))
+        status = Agency.get_instance().get_missing_issues(subscriber_id)
+        if status:
+            return status
+        else:
+            abort(422,{"error":"id is not correct"})
     

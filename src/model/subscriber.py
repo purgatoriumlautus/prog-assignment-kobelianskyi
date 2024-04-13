@@ -52,3 +52,8 @@ class Subscriber(object):
                     else:
                         missing_issues["issues"].append({"issue_id":issue.issue_id,"releasedate":issue.releasedate,"newspaper":issue.newspaper.name})
         return missing_issues
+    
+    def quit_agency(self):
+        for news in self.newspapers:
+            news.subscribers.remove(self)
+            news.subscriber_amount -= 1

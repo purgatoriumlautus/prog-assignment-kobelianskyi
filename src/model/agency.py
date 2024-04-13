@@ -185,6 +185,7 @@ class Agency(object):
     def delete_subscriber(self,subscriber_id):
         subscriber = self.get_subscriber(subscriber_id)
         if subscriber:
+            subscriber.quit_agency()
             self.subscribers.remove(subscriber)
             
             return True
@@ -240,5 +241,4 @@ class Agency(object):
         subscriber = self.get_subscriber(subscriber_id)
         if subscriber:
             return subscriber.check_issues()
-        else:
-            return((f"Subscriber {subscriber_id} was not found!"))
+        return False

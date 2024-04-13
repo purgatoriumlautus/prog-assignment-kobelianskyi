@@ -452,7 +452,7 @@ def test_missing_issues(agency):
     agency.deliver_issue(paper_id=69,issue_id=2,subscriber_id=46)
     
     assert agency.get_missing_issues(subscriber_id=46) == {"issues":[]} 
-    assert agency.get_missing_issues(subscriber_id=493599593) == "Subscriber 493599593 was not found!"
+    assert agency.get_missing_issues(subscriber_id=493599593) == False
 
 
     
